@@ -5,8 +5,8 @@ import random
 import toml
 
 from environments.carracing.carracing import RacingNet, CarRacing
-from environments.bipedal.bipedal import BipedalNet, BipedalWalker
-from algorithms.ppo.ppo import PPO
+from environments.bipedal.bipedal import PPOBipedalPolicyNet, BipedalGymEnv
+from algorithms.ppo.ppo import ProximalPolicyTrainer
 
 CONFIG_FILE = r"C:/Users/anujp/Desktop/Reinforcement_learning_final_project/parameters/ppo/ppo.toml"
 
@@ -40,7 +40,7 @@ def select_environment():
             print("\nSelected: CarRacing-v2")
             return env, "carracing"
         elif choice == "2":
-            env = BipedalWalker()
+            env = BipedalGymEnv()
             print("\nSelected: BipedalWalker-v3")
             return env, "bipedal"
         else:
@@ -57,28 +57,29 @@ def main():
     if env_type == "carracing":
         net = RacingNet(env.observation_space.shape, env.action_space.shape)
     else:
-        net = BipedalNet(env.observation_space.shape, env.action_space.shape)
+        net = PPOBipedalPolicyNet(env.observation_space.shape, env.action_space.shape)
             
-    agent = PPO(
-        env,
-        net,
-        lr=cfg["lr"],
-        gamma=cfg["gamma"],
-        batch_size=cfg["batch_size"],
-        gae_lambda=cfg["gae_lambda"],
-        clip=cfg["clip"],
-        value_coef=cfg["value_coef"],
-        entropy_coef=cfg["entropy_coef"],
-        epochs_per_step=cfg["epochs_per_step"],
-        num_steps=cfg["num_steps"],
-        horizon=cfg["horizon"],
-        save_dir=cfg["save_dir"],
-        save_interval=cfg["save_interval"],
+    agent = ProximalPolicyTrainer(
+        environment=env,
+        model=net,
+        initial_lr=cfg["lr"],
+        discount_factor=cfg["gamma"],
+        minibatch_size=cfg["batch_size"],
+        gae_factor=cfg["gae_lambda"],
+        clip_range=cfg["clip"],
+        val_loss_coef=cfg["value_coef"],
+        ent_loss_coef=cfg["entropy_coef"],
+        optimization_epochs=cfg["epochs_per_step"],
+        total_iterations=cfg["num_steps"],
+        rollout_length=cfg["horizon"],
+        checkpoint_path=cfg["save_dir"],
+        checkpoint_interval=cfg["save_interval"],
     )
     print("\nUsing PPO algorithm")
 
+
     print("\nStarting training...")
-    agent.train()
+    agent.run_training()
 
     env.close()
 
