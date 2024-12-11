@@ -65,3 +65,4 @@ min_lr = 1e-6
 noise_scale_start = 0.2
 noise_decay_steps = 1500000
 min_noise_scale = 0.02
+
